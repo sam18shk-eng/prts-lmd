@@ -1,6 +1,6 @@
 FROM php:8.3-apache
 
-# Install dependencies sistem
+# Install dependencies sistem + Node.js (buat Vite/Tailwind)
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libonig-dev \
@@ -9,7 +9,9 @@ RUN apt-get update && apt-get install -y \
     unzip \
     git \
     curl \
-    libsqlite3-dev
+    libsqlite3-dev \
+    nodejs \
+    npm
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -26,8 +28,11 @@ WORKDIR /var/www/html
 # Copy semua file project
 COPY . /var/www/html
 
-# Install vendor dependencies
+# Install Composer dependencies
 RUN composer install --no-dev --optimize-autoloader
+
+# Install NPM dependencies & Build asset Frontend (Vite/Tailwind)
+RUN npm install && npm run build
 
 # Pastikan folder database, storage, dan bootstrap/cache ada
 RUN mkdir -p /var/www/html/database \
@@ -44,7 +49,7 @@ RUN a2enmod rewrite
 
 EXPOSE 80
 
-# Perintah otomatis pas container start: buat DB + auto migrate + jalankan Apache
+# Perintah otomatis pas container start
 CMD touch /var/www/html/database/database.sqlite \
     && chown www-data:www-data /var/www/html/database/database.sqlite \
     && php artisan migrate --force \
