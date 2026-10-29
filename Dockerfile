@@ -1,6 +1,6 @@
 FROM php:8.2-apache
 
-# Install dependencies yang dibutuhin Laravel
+# Install dependencies sistem yang dibutuhin Laravel
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libonig-dev \
@@ -16,14 +16,17 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
-# Get latest Composer
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy existing application directory contents
+# Copy semua file project
 COPY . /var/www/html
+
+# INSTALL COMPOSER DEPENDENCIES (Ini yang tadi kurang!)
+RUN composer install --no-dev --optimize-autoloader
 
 # Set permission buat storage & bootstrap cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
