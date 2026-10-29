@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions (termasuk pdo_sqlite buat database SQLite)
+# Install PHP extensions
 RUN docker-php-ext-install pdo_mysql pdo_sqlite mbstring exif pcntl bcmath gd
 
 # Install Composer
@@ -26,10 +26,10 @@ WORKDIR /var/www/html
 # Copy semua file project
 COPY . /var/www/html
 
-# Install vendor dependencies tanpa dev package
+# Install vendor dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Pastikan folder database, storage, dan bootstrap/cache ada dan bisa ditulis
+# Pastikan folder database, storage, dan bootstrap/cache ada
 RUN mkdir -p /var/www/html/database \
     && touch /var/www/html/database/database.sqlite \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database \
@@ -43,3 +43,9 @@ RUN sed -ri -e 's!/var/www/html/!${APACHE_DOCUMENT_ROOT}/!g' /etc/apache2/sites-
 RUN a2enmod rewrite
 
 EXPOSE 80
+
+# Perintah otomatis pas container start: buat DB + auto migrate + jalankan Apache
+CMD touch /var/www/html/database/database.sqlite \
+    && chown www-data:www-data /var/www/html/database/database.sqlite \
+    && php artisan migrate --force \
+    && apache2-foreground
